@@ -11,6 +11,42 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const createUserId = () => `USR-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
 
+function mapProfile(profile) {
+  return profile ? { ...profile, name: profile.full_name ?? profile.name } : null;
+}
+
+export async function ensureProfileForUser(user, fallbackName = null) {
+  let { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!profile && user.email) {
+    const byEmail = await supabase.from('profiles').select('*').eq('email', user.email).maybeSingle();
+    if (byEmail.error) throw byEmail.error;
+    profile = byEmail.data;
+  }
+
+  if (!profile) {
+    const insertPayload = {
+      id: user.id,
+      full_name: fallbackName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student',
+      email: user.email,
+      role: 'student',
+      approved: false,
+      user_id: createUserId()
+    };
+    const inserted = await supabase.from('profiles').upsert(insertPayload).select('*').single();
+    if (inserted.error) throw inserted.error;
+    profile = inserted.data;
+  }
+
+  return mapProfile(profile);
+}
+
 export async function getCurrentUserProfile() {
   const {
     data: { user },
@@ -20,12 +56,5 @@ export async function getCurrentUserProfile() {
   if (authError) throw authError;
   if (!user) return null;
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (error) throw error;
-  return profile ? { ...profile, name: profile.full_name ?? profile.name } : null;
+  return ensureProfileForUser(user);
 }

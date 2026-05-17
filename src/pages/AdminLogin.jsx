@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { ensureProfileForUser, supabase } from '../lib/supabase';
 
 function safeAdminLog(step, payload = {}) {
   const safePayload = {
@@ -31,32 +31,7 @@ export default function AdminLogin() {
 
       safeAdminLog('signed_in', { userId: authUser.id, email: authUser.email });
 
-      let { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, role, approved')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (profileError) {
-        safeAdminLog('profile_query_error_by_id', { userId: authUser.id, message: profileError.message });
-        throw profileError;
-      }
-
-      // fallback in case legacy rows were created with mismatched id but correct email
-      if (!profile && authUser.email) {
-        const fallback = await supabase
-          .from('profiles')
-          .select('id, email, role, approved')
-          .eq('email', authUser.email)
-          .maybeSingle();
-
-        if (fallback.error) {
-          safeAdminLog('profile_query_error_by_email', { email: authUser.email, message: fallback.error.message });
-          throw fallback.error;
-        }
-
-        profile = fallback.data;
-      }
+      const profile = await ensureProfileForUser(authUser);
 
       safeAdminLog('profile_loaded', {
         userId: authUser.id,
