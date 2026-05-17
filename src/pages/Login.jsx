@@ -24,11 +24,11 @@ export default function Login() {
         if (data.user) {
           const { error: profileError } = await supabase.from('profiles').upsert({
             id: data.user.id,
-            user_id: createUserId(),
-            name,
+            full_name: name,
             email,
             approved: false,
-            role: 'student'
+            role: 'student',
+            user_id: createUserId()
           });
           if (profileError) throw profileError;
         }

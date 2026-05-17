@@ -27,5 +27,5 @@ export async function getCurrentUserProfile() {
     .single();
 
   if (error) throw error;
-  return profile;
+  return profile ? { ...profile, name: profile.full_name ?? profile.name } : null;
 }
