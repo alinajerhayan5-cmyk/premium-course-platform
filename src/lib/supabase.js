@@ -3,26 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const hasSupabase = Boolean(supabaseUrl && supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+}
 
-export const supabase = hasSupabase ? createClient(supabaseUrl, supabaseAnonKey) : null;
-export const isDemoMode = !hasSupabase;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const createUserId = () => `USR-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
 
-export const demoUsers = [
-  {
-    id: '1',
-    user_id: 'USR-100001-111',
-    name: 'Demo Student',
-    email: 'student@example.com',
-    approved: false
-  },
-  {
-    id: '2',
-    user_id: 'USR-100002-222',
-    name: 'Approved Student',
-    email: 'approved@example.com',
-    approved: true
-  }
-];
+export async function getCurrentUserProfile() {
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser();
+
+  if (authError) throw authError;
+  if (!user) return null;
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error) throw error;
+  return profile;
+}

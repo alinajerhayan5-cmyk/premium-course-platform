@@ -1,11 +1,18 @@
 import { Bot } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
-const lessonCards = ['Intro Lesson', 'Prompt Basics', 'Advanced Workflow', 'Case Study'];
 const menFolders = ['Things Prompt', 'Model Prompt', 'Shirt Prompt', 'Jacket Prompt', 'Pants Prompt', 'Footwear Prompt'];
 const womenFolders = ['Things Prompt', 'Model Prompt', 'Top Prompt', 'Jacket Prompt', 'Pants Prompt', 'Dress Prompt', 'Footwear Prompt', 'Beauty Products Prompt', 'Bag Prompt'];
 const chats = ['GENERAL', 'STUDENTS WINS', 'ADMINS UPDATE'];
 
 export default function Courses() {
+  const [lessons, setLessons] = useState([]);
+
+  useEffect(() => {
+    supabase.from('lessons').select('*').order('created_at', { ascending: false }).then(({ data }) => setLessons(data || []));
+  }, []);
+
   return (
     <div className="grid gap-4 md:grid-cols-[280px_1fr]">
       <aside className="card space-y-4">
@@ -18,10 +25,12 @@ export default function Courses() {
       <main className="card">
         <h2 className="mb-4 text-xl font-bold">Lesson Videos</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {lessonCards.map((l) => (
-            <div key={l} className="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
-              <div className="mb-2 aspect-video rounded-lg bg-gradient-to-br from-luxury-violet to-luxury-indigo" />
-              <h4 className="font-semibold">{l}</h4>
+          {lessons.map((l) => (
+            <div key={l.id} className="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
+              {l.thumbnail_url ? <img src={l.thumbnail_url} alt={l.title} className="mb-2 aspect-video w-full rounded-lg object-cover" /> : <div className="mb-2 aspect-video rounded-lg bg-gradient-to-br from-luxury-violet to-luxury-indigo" />}
+              <h4 className="font-semibold">{l.title}</h4>
+              <p className="text-sm text-slate-300">{l.duration}</p>
+              {l.video_url && <a href={l.video_url} target="_blank" rel="noreferrer" className="text-luxury-cyan text-sm">Open Video</a>}
             </div>
           ))}
         </div>
