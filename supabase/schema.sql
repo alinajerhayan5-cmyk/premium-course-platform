@@ -28,6 +28,17 @@ create table if not exists public.prompt_folders (
   created_at timestamptz not null default now()
 );
 
+
+create table if not exists public.prompt_files (
+  id uuid primary key default gen_random_uuid(),
+  section text not null check (section in ('men','women')),
+  category text not null,
+  title text not null,
+  prompt_text text not null,
+  image_url text not null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.group_posts (
   id uuid primary key default gen_random_uuid(),
   room text not null,
@@ -41,6 +52,7 @@ alter table public.profiles enable row level security;
 alter table public.lessons enable row level security;
 alter table public.prompt_folders enable row level security;
 alter table public.group_posts enable row level security;
+alter table public.prompt_files enable row level security;
 
 create policy "profiles_select_own_or_admin" on public.profiles for select
 using (auth.uid() = id or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role='admin'));
@@ -58,4 +70,9 @@ using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.rol
 
 create policy "posts_select_auth" on public.group_posts for select using (auth.role() = 'authenticated');
 create policy "posts_manage_admin" on public.group_posts for all
+using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role='admin'));
+
+
+create policy "prompt_files_select_auth" on public.prompt_files for select using (auth.role() = 'authenticated');
+create policy "prompt_files_manage_admin" on public.prompt_files for all
 using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role='admin'));
