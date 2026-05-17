@@ -6,6 +6,9 @@ export default function AdminDashboard() {
   const [q, setQ] = useState('');
   const [users, setUsers] = useState(JSON.parse(localStorage.getItem('pcp_users') || '[]'));
 
+  const totalUsers = users.length;
+  const approvedUsers = users.filter((u) => u.approved).length;
+
   const filtered = useMemo(
     () => users.filter((u) => [u.user_id, u.name, u.email].join(' ').toLowerCase().includes(q.toLowerCase())),
     [q, users]
@@ -23,8 +26,13 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-5">
+      <div className="card flex items-center justify-between">
+        <h1 className="text-xl font-bold">Admin Controls</h1>
+        <button className="btn-secondary" onClick={() => { localStorage.removeItem('pcp_admin'); window.location.href='/admin-login'; }}>Logout</button>
+      </div>
       <div className="card">
-        <h2 className="mb-3 text-xl font-bold">User Approval</h2>
+        <h2 className="mb-1 text-xl font-bold">User Approval</h2>
+        <p className="mb-3 text-sm text-slate-300">Approved: {approvedUsers} / {totalUsers}</p>
         <input className="input mb-3" placeholder="Search by USER ID, name, email" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="space-y-2">
           {filtered.map((u) => (
