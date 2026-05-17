@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const isAdmin = localStorage.getItem('pcp_admin') === '1';
   const [q, setQ] = useState('');
   const [users, setUsers] = useState(JSON.parse(localStorage.getItem('pcp_users') || '[]'));
 
@@ -16,6 +18,8 @@ export default function AdminDashboard() {
     const current = JSON.parse(localStorage.getItem('pcp_current_user') || 'null');
     if (current?.user_id === id) localStorage.setItem('pcp_current_user', JSON.stringify({ ...current, approved }));
   };
+
+  if (!isAdmin) return <Navigate to="/admin-login" replace />;
 
   return (
     <div className="space-y-5">

@@ -1,10 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
 export default function StudentDashboard() {
-  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('pcp_current_user') || 'null');
 
-  if (!user) navigate('/login');
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
